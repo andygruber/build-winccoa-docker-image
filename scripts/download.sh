@@ -10,7 +10,7 @@ OUTPUT_FILE="WinCC_OA.zip"
 
 PATCH_NUM="p007"
 
-curl -o "$HTML_FILE" -c cookie.txt -d "user=${USERNAME}&pass=${PASSWORD}&logintype=login" -X POST "${BASE_URL}/index.html?tx_felogin_login%5Baction%5D=login&amp;tx_felogin_login%5Bcontroller%5D=Login&amp;cHash=c7468a0d2aa90b33b574ad5ad452c085"
+curl -o "$HTML_FILE" -c cookie.txt -d "user=${USERNAME}&pass=${PASSWORD}&logintype=login" -X POST "${BASE_URL}/index.html?tx_felogin_login%5Baction%5D=login&amp;tx_felogin_login%5Bcontroller%5D=Login"
 
 curl -o "$HTML_FILE" -b cookie.txt "${BASE_URL}/downloads/detail/wincc-oa-319-${PATCH_NUM}-debian-11-bullseye.html"
 
