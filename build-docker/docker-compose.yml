@@ -1,0 +1,41 @@
+version: "3"
+services:
+  create-repo:
+    image: debian:bullseye-slim
+    restart: no
+    command: ['bash', '-c', 'apt-get update && apt-get -y install dpkg-dev gzip && cd /work/ && dpkg-scanpackages -m . | gzip > Packages.gz']
+    volumes:
+      - ../data/:/work/
+  repo-server:
+    image: nginx:latest
+    expose:
+      - "80"
+    volumes:
+      - ../data/:/usr/share/nginx/html/
+#      - ./file-listing.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - winccoarepo
+    depends_on:
+      - create-repo
+
+#  _winccoa_build:
+#    image: winccoa320
+#    command: ['echo', 'build completed']  # any linux command which directly terminates.
+#    build:
+      #context: winccoa/.
+#      network: repo-server
+#      args:
+#        BASE_IMAGE: artifactory.etm.at:8445/docker-winccoa/runtime/debian:bullseye-linux-amd64 # to speedup build a bit we use an image which already has most dependencies installed
+#        BASE_IMAGE: artifactory.etm.at:8445/docker-winccoa/build/debian:bullseye # for debugging we need to use a developer image
+#    volumes:
+#      - ../data/Dockerfile:/work/
+
+networks:
+  winccoarepo:
+    driver: bridge
+    external: true
+    name: winccoarepo
+
+
+# docker buildx create --use --name winccoabuilder --driver docker-container --driver-opt "network=winccoarepo"
+# docker buildx 
