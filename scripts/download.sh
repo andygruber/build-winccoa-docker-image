@@ -10,7 +10,7 @@ BASE_URL="https://www.winccoa.com"
 OUTPUT_FILE="WinCC_OA.zip"
 
 echo "Login to ${BASE_URL}"
-curl -o "$HTML1_FILE" -c cookie.txt -d "user=${USERNAME}&pass=${PASSWORD}&logintype=login" -X POST "${BASE_URL}/index.html?tx_felogin_login%5Baction%5D=login&amp;tx_felogin_login%5Bcontroller%5D=Login"
+curl -o "$HTML1_FILE" -c cookie.txt -d "user=${ETM_USERNAME}&pass=${ETM_PASSWORD}&logintype=login" -X POST "${BASE_URL}/index.html?tx_felogin_login%5Baction%5D=login&amp;tx_felogin_login%5Bcontroller%5D=Login"
 
 echo "Open main Downloadpage"
 curl -o "$HTML2_FILE" -b cookie.txt "${BASE_URL}/downloads/category/wincc-oa-319.html"
@@ -40,6 +40,9 @@ echo "Downloading $FULL_URL to $OUTPUT_FILE"
 # Specify the output filename
 
 # Download the file with verbose output
-curl -o "$OUTPUT_FILE" -b cookie.txt "$FULL_URL"
+# curl -o "$OUTPUT_FILE" -b cookie.txt "$FULL_URL"
+
+# Download using original filename
+curl -O -J -b cookie.txt "$FULL_URL"
 
 echo "Downloaded to $OUTPUT_FILE"
