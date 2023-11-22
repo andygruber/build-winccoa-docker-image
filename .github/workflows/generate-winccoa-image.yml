@@ -48,7 +48,7 @@ jobs:
           ETM_PASSWORD: ${{ secrets.ETM_PASSWORD }}
         run: scripts/download.sh
 
-      - name: Unzip dataPrepare data for Docker image build
+      - name: Unzip data
         run: |
           mkdir data && cd data && \
           unzip ../*.zip
@@ -68,12 +68,17 @@ jobs:
           # wait until repo data is generated
           docker compose wait create-repo
 
-      - name: Docker build
+      - name: Docker build preparation image
         working-directory: ./build-docker
         run: |
           DOCKER_BUILDKIT=0 docker build --network=winccoarepo -t winccoaprepare:temp .
-          DOCKER_BUILDKIT=0 docker build --no-cache --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaapi    --tag agruberetm/winccoa/3.19.7:api -f Dockerfile_install .
-          DOCKER_BUILDKIT=0 docker build            --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaserver --tag agruberetm/winccoa/3.19.7:baseserver -f Dockerfile_install .
+
+      - name: Docker build WinCC OA images
+        working-directory: ./build-docker
+        run: |
+          DOCKER_BUILDKIT=0 docker build --network=winccoarepo -t winccoaprepare:temp .
+          DOCKER_BUILDKIT=0 docker build --no-cache --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaapi    --tag agruberetm/winccoa-3.19.7:api -f Dockerfile_install .
+          DOCKER_BUILDKIT=0 docker build            --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaserver --tag agruberetm/winccoa-3.19.7:baseserver -f Dockerfile_install .
 
       - name: Docker build teardown
         working-directory: ./build-docker
@@ -89,5 +94,5 @@ jobs:
 
       - name: Docker push
         run: |
-          docker push agruberetm/winccoa/3.19.7:api
-          docker push agruberetm/winccoa/3.19.7:baseserver
+          docker push agruberetm/winccoa-3.19.7:api
+          docker push agruberetm/winccoa-3.19.7:baseserver
