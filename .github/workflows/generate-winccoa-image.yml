@@ -48,6 +48,35 @@ jobs:
           ETM_PASSWORD: ${{ secrets.ETM_PASSWORD }}
         run: scripts/download.sh
 
+      - name: Extract version information
+        id: get_version
+        run: |
+          zip_file=$(ls *.zip | head -n 1)
+          if [ -f "$zip_file" ]; then
+            echo "ZIP file found: $zip_file"
+            [[ $zip_file =~ ([0-9]+)\.([0-9]+)_linux_debian_x86_64_P([0-9]+)\.?([0-9]*)\.zip ]]
+            major_version=${BASH_REMATCH[1]}
+            minor_version=${BASH_REMATCH[2]}
+            patch_version=${BASH_REMATCH[3]}
+            revision=${BASH_REMATCH[4]}
+
+            if [ "$revision" != "0" ] && [ ! -z "$revision" ]; then
+              version_string="$major_version.$minor_version.$patch_version.$revision"
+            else
+              version_string="$major_version.$minor_version.$patch_version"
+            fi
+
+            echo "::set-output name=major_version::${major_version}"
+            echo "::set-output name=minor_version::${minor_version}"
+            echo "::set-output name=patch_version::${patch_version}"
+            echo "::set-output name=revision::${revision}"
+            echo "::set-output name=version::${version_string}"
+
+          else
+            echo "No ZIP file found"
+            exit 1
+          fi
+
       - name: Unzip data
         run: |
           mkdir data && cd data && \
@@ -60,6 +89,12 @@ jobs:
           # patch Dockerfile so it does not copy and install the packages, but only does preparation
           scripts/patchDockerfile.sh build-docker/Dockerfile
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Docker build setup
         working-directory: ./build-docker
         run: |
@@ -71,28 +106,21 @@ jobs:
       - name: Docker build preparation image
         working-directory: ./build-docker
         run: |
-          DOCKER_BUILDKIT=0 docker build --network=winccoarepo -t winccoaprepare:temp .
+          DOCKER_BUILDKIT=0 docker build --no-cache --network=winccoarepo -t winccoaprepare:temp .
 
-      - name: Docker build WinCC OA images
+      - name: Docker build and push images
         working-directory: ./build-docker
         run: |
-          DOCKER_BUILDKIT=0 docker build --network=winccoarepo -t winccoaprepare:temp .
-          DOCKER_BUILDKIT=0 docker build --no-cache --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaapi    --tag agruberetm/winccoa-3.19.7:api -f Dockerfile_install .
-          DOCKER_BUILDKIT=0 docker build            --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaserver --tag agruberetm/winccoa-3.19.7:baseserver -f Dockerfile_install .
+          for target in api server; do
+            tag_suffix=${target}
+            image_name="agruberetm/winccoa:v${{ steps.get_version.outputs.version }}-${tag_suffix}"
+
+            DOCKER_BUILDKIT=0 docker build --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoa${target} --tag ${image_name} -f Dockerfile_install .
+            docker push ${image_name}
+          done
 
       - name: Docker build teardown
         working-directory: ./build-docker
         run: |
           docker compose down
           docker network rm winccoarepo
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker push
-        run: |
-          docker push agruberetm/winccoa-3.19.7:api
-          docker push agruberetm/winccoa-3.19.7:baseserver
