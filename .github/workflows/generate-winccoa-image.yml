@@ -24,7 +24,7 @@ jobs:
           else
             ENV_NAME=staging
           fi
-          echo "::set-output name=env_name::${ENV_NAME}"
+          echo "env_name=${ENV_NAME}" >> $GITHUB_OUTPUT
           
       - name: Chosen environment
         run: echo "Environment used ${{ steps.branch_check.outputs.env_name }}"
@@ -57,8 +57,8 @@ jobs:
             [[ $zip_file =~ ([0-9]+)\.([0-9]+)_linux_debian_x86_64_P([0-9]+)\.?([0-9]*)\.zip ]]
             major_version=${BASH_REMATCH[1]}
             minor_version=${BASH_REMATCH[2]}
-            patch_version=${BASH_REMATCH[3]}
-            revision=${BASH_REMATCH[4]}
+            patch_version=$(echo ${BASH_REMATCH[3]} | sed 's/^0*//') # Remove leading zeros
+            revision=${BASH_REMATCH[4]#\.} # Remove leading dot from the revision
 
             if [ "$revision" != "0" ] && [ ! -z "$revision" ]; then
               version_string="$major_version.$minor_version.$patch_version.$revision"
@@ -66,11 +66,11 @@ jobs:
               version_string="$major_version.$minor_version.$patch_version"
             fi
 
-            echo "::set-output name=major_version::${major_version}"
-            echo "::set-output name=minor_version::${minor_version}"
-            echo "::set-output name=patch_version::${patch_version}"
-            echo "::set-output name=revision::${revision}"
-            echo "::set-output name=version::${version_string}"
+            echo "major_version=${major_version}" >> $GITHUB_OUTPUT
+            echo "minor_version=${minor_version}" >> $GITHUB_OUTPUT
+            echo "patch_version=${patch_version}" >> $GITHUB_OUTPUT
+            echo "revision=${revision}" >> $GITHUB_OUTPUT
+            echo "version=${version_string}" >> $GITHUB_OUTPUT
 
           else
             echo "No ZIP file found"
@@ -111,13 +111,16 @@ jobs:
       - name: Docker build and push images
         working-directory: ./build-docker
         run: |
-          for target in api server; do
+          # specify targets from Dockerfile_install here
+          for target in api server uiserver; do
             tag_suffix=${target}
-            image_name="agruberetm/winccoa:v${{ steps.get_version.outputs.version }}-${tag_suffix}"
+            image_name="${DOCKER_IMAGE}:v${{ steps.get_version.outputs.version }}-${tag_suffix}"
 
             DOCKER_BUILDKIT=0 docker build --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoa${target} --tag ${image_name} -f Dockerfile_install .
             docker push ${image_name}
           done
+        env:
+          DOCKER_IMAGE: ${{ secrets.DOCKER_IMAGE }}
 
       - name: Docker build teardown
         working-directory: ./build-docker
