@@ -1,0 +1,25 @@
+# To change the base image please pass the desired value
+# during the docker build, for example:
+# docker build --build-arg BASE_IMAGE=customdockerregistry/baseimage:latest -t winccoa319 .
+ARG BASE_IMAGE=winccoaprepare:temp
+# Pass ARCH as prefix to BASE_IMAGE to explicitly set the used architecture.
+# The image needs to be available under the resulting FROM argument and your
+# environment needs to be able to run the architecture from the image
+# docker build --build-arg ARCH=arm64v8/ -t arm64v8/winccoa319 .
+ARG ARCH=
+FROM ${ARCH}${BASE_IMAGE} as addedrepo
+
+RUN echo 'deb [trusted=yes] http://repo-server/ /' | sudo tee -a /etc/apt/sources.list.d/build.list > /dev/null && \
+    sudo apt-get update
+
+FROM addedrepo AS winccoabase
+RUN sudo apt-get -y install winccoa-\*-base
+
+FROM winccoabase AS winccoaapi
+RUN sudo apt-get -y install winccoa-\*-apicpp
+
+FROM winccoabase AS winccoaserver
+RUN sudo apt-get -y install winccoa-\*-baseserver
+
+FROM winccoaserver AS winccoauiserver
+RUN sudo apt-get -y install winccoa-\*-baseui winccoa-\*-baseshortcuts winccoa-\*-desktopuiserver
