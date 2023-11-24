@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Some check on branch
-        id: branch_check
+      - name: Define the used environment
+        id: env_check
         run: |
           ENV_NAME=staging
           if [[ "${{ github.event_name }}" == "release" ]]; then
@@ -30,7 +30,7 @@ jobs:
           echo "env_name=${ENV_NAME}" >> $GITHUB_OUTPUT
                   
     outputs:
-      env_name: ${{ steps.branch_check.outputs.env_name }}
+      env_name: ${{ steps.env_check.outputs.env_name }}
 
   generate-winccoa-image:
     needs: [get_environment]

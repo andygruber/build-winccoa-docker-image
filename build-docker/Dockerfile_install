@@ -23,13 +23,3 @@ RUN sudo apt-get -y install winccoa-\*-baseserver
 
 FROM winccoaserver AS winccoauiserver
 RUN sudo apt-get -y install winccoa-\*-baseui winccoa-\*-baseshortcuts winccoa-\*-desktopuiserver
-
-# docker network create winccoarepo
-# docker compose up -d
-# docker compose wait create-repo
-# original Dockerfile needs to disable COPY and package installation, best to replace codemeter with codemeter-lite
-# DOCKER_BUILDKIT=0 docker build --network=winccoarepo -t winccoaprepare:temp .
-# DOCKER_BUILDKIT=0 docker build --no-cache --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaapi    --tag winccoa/3.19.7:api -f Dockerfile_install .
-# DOCKER_BUILDKIT=0 docker build            --network=winccoarepo --build-arg BASE_IMAGE=winccoaprepare:temp --target winccoaserver --tag winccoa/3.19.7:baseserver -f Dockerfile_install .
-# docker compose down
-# docker network rm winccoarepo
