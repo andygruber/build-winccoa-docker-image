@@ -16,7 +16,11 @@ FROM addedrepo AS winccoabase
 RUN sudo apt-get -y install winccoa-\*-base
 
 FROM winccoabase AS winccoaapi
-RUN sudo apt-get -y install winccoa-\*-apicpp
+RUN sudo apt-get -y install winccoa-\*-apicpp \
+        build-essential ninja-build git git-lfs libssl-dev file zip curl python3-pip && \
+    curl -o "/tmp/cmake_inst.sh" "https://cmake.org/files/v3.23/cmake-3.23.0-linux-x86_64.sh" && \
+    chmod +x /tmp/cmake_inst.sh && sudo /tmp/cmake_inst.sh --skip-license --prefix=/usr && rm /tmp/cmake_inst.sh && \
+    sudo pip3 install conan
 
 FROM winccoabase AS winccoaserver
 RUN sudo apt-get -y install winccoa-\*-baseserver
