@@ -1,3 +1,9 @@
+# Moved to winccoa organization
+
+Here this repository will not be updated anymore.
+
+Refer to the new URL for a maintained version: https://github.com/winccoa/build-winccoa-manager
+
 # Documentation for "build-winccoa-docker-image" Repository
 
 This repository hosts a GitHub Action workflow for
